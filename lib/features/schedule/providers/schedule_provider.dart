@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:student_management_app/features/schedule/data/models/schedule_model.dart';
-import 'package:student_management_app/core/services/notification_service.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:uuid/uuid.dart';
 
@@ -22,14 +21,12 @@ class ScheduleNotifier extends StateNotifier<List<ScheduleModel>> {
   Future<void> addSchedule(ScheduleModel schedule) async {
     final box = Hive.box<ScheduleModel>(schedulesBoxName);
     await box.put(schedule.id, schedule);
-    await NotificationService().scheduleClassReminder(schedule);
     state = [...state, schedule];
   }
 
   Future<void> removeSchedule(String id) async {
     final box = Hive.box<ScheduleModel>(schedulesBoxName);
     await box.delete(id);
-    await NotificationService().cancelClassReminder(id);
     state = state.where((s) => s.id != id).toList();
   }
 
@@ -275,7 +272,6 @@ class ScheduleNotifier extends StateNotifier<List<ScheduleModel>> {
         
         for (var schedule in finalSchedules) {
           await box.put(schedule.id, schedule);
-          await NotificationService().scheduleClassReminder(schedule);
         }
         
         state = finalSchedules;

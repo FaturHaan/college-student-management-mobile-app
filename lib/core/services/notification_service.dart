@@ -62,8 +62,8 @@ class NotificationService {
     return stringId.hashCode.abs() + offset;
   }
 
-  /// Menjadwalkan pengingat jadwal kelas (50 menit - 1 jam sebelum kelas)
-  Future<void> scheduleClassReminder(ScheduleModel schedule) async {
+  /// Menjadwalkan pengingat jadwal kelas sesuai preferensi user (dalam menit sebelum kelas)
+  Future<void> scheduleClassReminder(ScheduleModel schedule, {int minutesBefore = 60}) async {
     final startTimeStr = schedule.waktu.split(' - ').first; // Asumsi "08:00"
     final parts = startTimeStr.split(':');
     if (parts.length < 2) return;
@@ -71,14 +71,25 @@ class NotificationService {
     int hour = int.tryParse(parts[0]) ?? 8;
     int minute = int.tryParse(parts[1]) ?? 0;
 
-    // Mundurkan 1 jam (60 menit)
-    hour -= 1;
-    if (hour < 0) {
-      hour += 24;
-    }
+    // Mundurkan sesuai preferensi user
+    final totalMinutes = hour * 60 + minute - minutesBefore;
+    hour = (totalMinutes ~/ 60) % 24;
+    if (hour < 0) hour += 24;
+    minute = totalMinutes % 60;
+    if (minute < 0) minute += 60;
 
     final dayOfWeek = _getDayOfWeek(schedule.hari);
     var nextInstance = _nextInstanceOfTime(dayOfWeek, hour, minute);
+
+    // Format body notifikasi sesuai waktu pengingat
+    String timeLabel;
+    if (minutesBefore >= 120) {
+      timeLabel = '${minutesBefore ~/ 60} jam';
+    } else if (minutesBefore >= 60) {
+      timeLabel = '1 jam';
+    } else {
+      timeLabel = '$minutesBefore menit';
+    }
 
     const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
       'class_reminder_channel',
@@ -92,7 +103,7 @@ class NotificationService {
     await flutterLocalNotificationsPlugin.zonedSchedule(
       id: _generateId(schedule.id),
       title: 'Persiapan Kelas: ${schedule.namaMk}',
-      body: 'Kelas ${schedule.namaMk} akan dimulai 1 jam lagi di ruang ${schedule.ruangan}',
+      body: 'Kelas ${schedule.namaMk} akan dimulai $timeLabel lagi di ruang ${schedule.ruangan}',
       scheduledDate: nextInstance,
       notificationDetails: platformChannelSpecifics,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
