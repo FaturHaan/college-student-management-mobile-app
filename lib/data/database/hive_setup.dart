@@ -5,6 +5,7 @@ import 'package:student_management_app/features/schedule/data/models/schedule_mo
 
 import 'package:student_management_app/features/tasks/data/models/task_model.dart';
 import 'package:student_management_app/features/finance/data/models/transaction_model.dart';
+import 'package:student_management_app/features/ipk/data/models/grade_model.dart';
 
 class HiveSetup {
   static Future<void> init() async {
@@ -16,6 +17,7 @@ class HiveSetup {
 
     Hive.registerAdapter(TaskModelAdapter());
     Hive.registerAdapter(TransactionModelAdapter());
+    Hive.registerAdapter(GradeModelAdapter());
 
     // Buka semua box yang dibutuhkan
     await Hive.openBox<ProfileModel>(profileBoxName);
@@ -23,6 +25,7 @@ class HiveSetup {
 
     await Hive.openBox<TaskModel>('tasksBox');
     await Hive.openBox<TransactionModel>('transactionsBox');
+    await Hive.openBox<GradeModel>('gradesBox');
     await Hive.openBox('settingsBox');
   }
 }

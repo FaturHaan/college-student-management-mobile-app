@@ -6,7 +6,9 @@ import 'package:student_management_app/core/services/notification_service.dart';
 import 'package:student_management_app/core/providers/theme_provider.dart';
 import 'package:student_management_app/features/profile/providers/profile_provider.dart';
 import 'package:student_management_app/features/profile/presentation/screens/onboarding_screen.dart';
+import 'package:student_management_app/features/onboarding/presentation/screens/tutorial_screen.dart';
 import 'package:student_management_app/features/home/presentation/screens/home_screen.dart';
+import 'package:hive/hive.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,13 +36,26 @@ class StudentManagementApp extends ConsumerWidget {
     final profile = ref.watch(profileProvider);
     final isDarkMode = ref.watch(themeProvider);
 
+    // Cek status tutorial
+    final box = Hive.box('settingsBox');
+    final bool hasSeenTutorial = box.get('hasSeenTutorial', defaultValue: false);
+
+    Widget homeWidget;
+    if (!hasSeenTutorial) {
+      homeWidget = const TutorialScreen();
+    } else if (profile == null) {
+      homeWidget = const OnboardingScreen();
+    } else {
+      homeWidget = const HomeScreen();
+    }
+
     return MaterialApp(
       title: 'Collagement',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
-      home: profile == null ? const OnboardingScreen() : const HomeScreen(),
+      home: homeWidget,
     );
   }
 }
